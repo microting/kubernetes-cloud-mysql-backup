@@ -7,11 +7,9 @@ jobs:
   test-pr:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Set up Google Cloud SDK
+      - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@master
         with:
           project_id: kubernetes-cloud-mysql-backup
@@ -24,8 +22,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
           # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # if you have/need it
           aws-region: eu-central-1
-      -
-        name: Install Age Encryption
+      - name: Install Age Encryption
         working-directory: /tmp
         run: |
           git clone https://filippo.io/age
@@ -33,8 +30,7 @@ jobs:
           git checkout 31500bfa2f6a36d2958483fc54d6e3cc74154cbc
           go build -o . filippo.io/age/cmd/...
           sudo cp age /usr/local/bin/
-      -
-        name: Build kubernetes-cloud-mysql-backup, pull mysql and setup Docker
+      - name: Build kubernetes-cloud-mysql-backup, pull mysql and setup Docker
         run: |
           # Build Container Locally for testing
           echo "Building kubernetes-cloud-mysql-backup..."
@@ -45,8 +41,7 @@ jobs:
           # Create Docker Network
           echo "Creating Docker network..."
           docker network create --driver bridge backup-net
-      -
-        name: Setup Test Database
+      - name: Setup Test Database
         run: |
           # Start MySQL Database
           echo "Starting MySQL Container..."
@@ -57,8 +52,7 @@ jobs:
           # Import Test DB
           echo "Importing test DB..."
           docker exec -i db-server mysql -u root -pletmein < tests/db/world.sql
-      -
-        name: Test GCP Standard Backup
+      - name: Test GCP Standard Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -75,8 +69,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test GCP Standard All Databases Backup
+      - name: Test GCP Standard All Databases Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -93,8 +86,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test GCP Compressed Backup
+      - name: Test GCP Compressed Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -114,8 +106,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test GCP Encrypted Backup
+      - name: Test GCP Encrypted Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -136,8 +127,7 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.age
-      -
-        name: Test GCP Backup with Timestamp
+      - name: Test GCP Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -155,8 +145,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test GCP Compressed Backup with Timestamp
+      - name: Test GCP Compressed Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -177,8 +166,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test GCP Compressed and Encrypted Backup
+      - name: Test GCP Compressed and Encrypted Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -202,8 +190,7 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.gz.age
-      -
-        name: Test GCP Compressed and Encrypted Backup with Timestamp
+      - name: Test GCP Compressed and Encrypted Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -228,8 +215,7 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.gz.age
-      -
-        name: Test GCP Encrypted Backup with Timestamp
+      - name: Test GCP Encrypted Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -251,8 +237,7 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.age
-      -
-        name: Test AWS Standard Backup
+      - name: Test AWS Standard Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -269,8 +254,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test AWS Compressed Backup
+      - name: Test AWS Compressed Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -290,8 +274,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test AWS Encrypted Backup
+      - name: Test AWS Encrypted Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -312,8 +295,7 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.age
-      -
-        name: Test AWS Backup with Timestamp
+      - name: Test AWS Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -331,8 +313,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test AWS Compressed Backup with Timestamp
+      - name: Test AWS Compressed Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -353,8 +334,7 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
-      -
-        name: Test AWS Compressed and Encrypted Backup
+      - name: Test AWS Compressed and Encrypted Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -378,8 +358,7 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.gz.age
-      -
-        name: Test AWS Compressed and Encrypted Backup with Timestamp
+      - name: Test AWS Compressed and Encrypted Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
@@ -404,8 +383,7 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.gz.age
-      -
-        name: Test AWS Encrypted Backup with Timestamp
+      - name: Test AWS Encrypted Backup with Timestamp
         run: |
           # Perform database backup
           echo "Performing database backup..."
