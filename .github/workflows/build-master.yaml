@@ -39,6 +39,7 @@ jobs:
           # Build Container Locally for testing
           echo "Building kubernetes-cloud-mysql-backup..."
           docker build -t kubernetes-cloud-mysql-backup:test .
+          docker image
           # Pull MySQL
           echo "Pulling mysql:5.7.32..."
           docker pull mysql:5.7.32
@@ -62,7 +63,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           gsutil cp gs://kubernetes-cloud-mysql-backup-github-testing/${{ github.sha }}/world.sql /tmp/world.sql
@@ -80,7 +81,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           gsutil cp gs://kubernetes-cloud-mysql-backup-github-testing/${{ github.sha }}/world.sql.gz /tmp/world.sql.gz
@@ -101,7 +102,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           gsutil cp gs://kubernetes-cloud-mysql-backup-github-testing/${{ github.sha }}/world.sql.age /tmp/world.sql.age
@@ -123,7 +124,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           DATE_STRING=$(date +_%Y_%m_%d)
           echo "Fetching database backup..."
@@ -142,7 +143,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           DATE_STRING=$(date +_%Y_%m_%d)
           echo "Fetching database backup..."
@@ -164,7 +165,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           gsutil cp gs://kubernetes-cloud-mysql-backup-github-testing/${{ github.sha }}/world.sql.gz.age /tmp/world.sql.gz.age
@@ -189,7 +190,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           DATE_STRING=$(date +_%Y_%m_%d)
@@ -215,7 +216,7 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH=${{ secrets.GCP_SA }} -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           DATE_STRING=$(date +_%Y_%m_%d)
