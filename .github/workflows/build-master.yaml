@@ -421,3 +421,24 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.age
+      - name: GPC post test cleanup
+        if: always()
+        run: |
+          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }} | grep "\.sql" | wc -l`
+          while (( $NUM_ITEMS > 0 ))
+          do
+            CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }} | grep "\.sql" | head -1`
+            gsutil rm $CURRENT_BACKUP_TO_DELETE
+            NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }} | grep "\.sql" | wc -l`
+          done
+      - name: AWS post test cleanup
+        if: always()
+        run: |
+          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }} | grep "\.sql" | wc -l`
+          while (( $NUM_ITEMS > 0 ))
+          do
+            CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }} | grep "\.sql" | head -1`
+            aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}/$CURRENT_BACKUP_TO_DELETE
+            NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }} | grep "\.sql" | wc -l`
+          done
+          aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}
