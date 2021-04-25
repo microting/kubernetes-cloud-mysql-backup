@@ -1,5 +1,5 @@
 --
--- Host: db-server    Database: world
+-- Host: db-server    Database: world2
 -- ------------------------------------------------------
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -14,12 +14,12 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `world`
+-- Current Database: `world2`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `world` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `world2` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
 
-USE `world`;
+USE `world2`;
 
 --
 -- Table structure for table `city`

@@ -6,6 +6,10 @@ on:
 jobs:
   build-master:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ["mysql:5.7","mysql:8.0","mariadb:10.1","mariadb:10.2","mariadb:10.3","mariadb:10.4","mariadb:10.5"]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -37,35 +41,39 @@ jobs:
           docker build -t kubernetes-cloud-mysql-backup:test .
           docker image
           # Pull MySQL
-          echo "Pulling mysql:5.7.32..."
-          docker pull mysql:5.7.32
+          echo "Pulling ${{matrix.test}}"
+          docker pull ${{matrix.test}}
           # Create Docker Network
           echo "Creating Docker network..."
           docker network create --driver bridge backup-net
       - name: Setup Test Database
         run: |
-          # Start MySQL Database
-          echo "Starting MySQL Container..."
-          docker run --name db-server -p 3306 --network backup-net -e MYSQL_ROOT_PASSWORD=letmein -d mysql:5.7.32
-          # Wait for MySQL to Start. The MySQL container takes a long time to start
-          echo "Waiting for MySQL Container to start..."
+          # Start ${{matrix.test}} Database
+          echo "Starting ${{matrix.test}} Container..."
+          docker run --name db-server -p 3306 --network backup-net -e MYSQL_ROOT_PASSWORD=letmein -d ${{matrix.test}}
+          # Wait for ${{matrix.test}} to Start. The ${{matrix.test}} container takes a long time to start
+          echo "Waiting for ${{matrix.test}} Container to start..."
           sleep 90
           # Import Test DB
           echo "Importing test DB..."
           docker exec -i db-server mysql -u root -pletmein < tests/db/world.sql
+          docker exec -i db-server mysql -u root -pletmein < tests/db/world0.sql
+          docker exec -i db-server mysql -u root -pletmein < tests/db/world1.sql
+          docker exec -i db-server mysql -u root -pletmein < tests/db/world2.sql
       - name: Test GCP Standard Backup
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world.sql /tmp/world.sql
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql /tmp/world.sql
           # Strip the "Dump Completed on" line
           echo "Stripping Dump Completed On line from downloaded backup..."
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -76,10 +84,10 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world.sql.gz /tmp/world.sql.gz
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql.gz /tmp/world.sql.gz
           # gunzip backup
           echo "Extracting backup"
           gunzip /tmp/world.sql.gz
@@ -88,6 +96,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -98,10 +107,10 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world.sql.age /tmp/world.sql.age
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql.age /tmp/world.sql.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.age > /tmp/world.sql
@@ -110,6 +119,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -121,16 +131,17 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           DATE_STRING=$(date +_%Y_%m_%d)
           echo "Fetching database backup..."
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world$DATE_STRING.sql /tmp/world.sql
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql /tmp/world.sql
           # Strip the "Dump Completed on" line
           echo "Stripping Dump Completed On line from downloaded backup..."
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -141,11 +152,11 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           DATE_STRING=$(date +_%Y_%m_%d)
           echo "Fetching database backup..."
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world$DATE_STRING.sql.gz /tmp/world.sql.gz
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql.gz /tmp/world.sql.gz
           # gunzip backup
           echo "Extracting backup"
           gunzip /tmp/world.sql.gz
@@ -154,6 +165,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -164,10 +176,10 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world.sql.gz.age /tmp/world.sql.gz.age
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql.gz.age /tmp/world.sql.gz.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.gz.age > /tmp/world.sql.gz
@@ -179,6 +191,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -190,11 +203,11 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           DATE_STRING=$(date +_%Y_%m_%d)
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world$DATE_STRING.sql.gz.age /tmp/world.sql.gz.age
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql.gz.age /tmp/world.sql.gz.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.gz.age > /tmp/world.sql.gz
@@ -206,6 +219,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -217,11 +231,11 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" --env-file tests/configs/gcp.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           DATE_STRING=$(date +_%Y_%m_%d)
-          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master/world$DATE_STRING.sql.age /tmp/world.sql.age
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql.age /tmp/world.sql.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.age > /tmp/world.sql
@@ -230,6 +244,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -241,15 +256,16 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world.sql /tmp/world.sql
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql /tmp/world.sql
           # Strip the "Dump Completed on" line
           echo "Stripping Dump Completed On line from downloaded backup..."
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -260,10 +276,10 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world.sql.gz /tmp/world.sql.gz
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql.gz /tmp/world.sql.gz
           # gunzip backup
           echo "Extracting backup"
           gunzip /tmp/world.sql.gz
@@ -272,6 +288,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -282,10 +299,10 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world.sql.age /tmp/world.sql.age
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql.age /tmp/world.sql.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.age > /tmp/world.sql
@@ -294,6 +311,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -305,16 +323,17 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           DATE_STRING=$(date +_%Y_%m_%d)
           echo "Fetching database backup..."
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world$DATE_STRING.sql /tmp/world.sql
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql /tmp/world.sql
           # Strip the "Dump Completed on" line
           echo "Stripping Dump Completed On line from downloaded backup..."
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -325,11 +344,11 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" -e BACKUP_COMPRESS=true --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           DATE_STRING=$(date +_%Y_%m_%d)
           echo "Fetching database backup..."
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world$DATE_STRING.sql.gz /tmp/world.sql.gz
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql.gz /tmp/world.sql.gz
           # gunzip backup
           echo "Extracting backup"
           gunzip /tmp/world.sql.gz
@@ -338,6 +357,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -348,10 +368,10 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world.sql.gz.age /tmp/world.sql.gz.age
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world.sql.gz.age /tmp/world.sql.gz.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.gz.age > /tmp/world.sql.gz
@@ -363,6 +383,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -374,11 +395,11 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e BACKUP_COMPRESS=true -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           DATE_STRING=$(date +_%Y_%m_%d)
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world$DATE_STRING.sql.gz.age /tmp/world.sql.gz.age
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql.gz.age /tmp/world.sql.gz.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.gz.age > /tmp/world.sql.gz
@@ -390,6 +411,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -401,11 +423,11 @@ jobs:
         run: |
           # Perform database backup
           echo "Performing database backup..."
-          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.sha }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" --env-file tests/configs/aws.env -e AGE_PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCezY3II94FtFhJfC7wc7tNQkR9c+XN6AUNhR269f5xBCe0RZTAHt+jpHnc2auePvz+3G34cOTF7lLrgioff/yv+K6hMItKg0OdiqGQ5gKBwzUOom3TgZ1Cht7vnAVejsWfbd7RBTIeDYUnoNiHf9dt8CJIaLaanDnjzLOLQcf7KPlZUbk6TexC1QpL6X8ir9tl7ao8v+QSgGtigO2QwF7QdSZSd/xlv0FsQKfgD25fIQRZEvcyiUnLYAK1wmziICORnW0fp/sL84E8Pj8GvbQK6AGuZn/s27oYmIdCTrwnR68Jvn6l8ST+QrwexzRM/k0yGkRMOU9AiG0o4skEdtGF3yzmC4PSwRys/Ygdy2jmrDaSJSPxpT/gvB5I2UbX2ZCHJ6/H6jNXP71aPI5Ib/eIjWuAyYPRPDvlDOenNN9s7UTD5P1wLoyxx2pnatMHAHu89+1GfdRPglvgUH6y5DYTjc0WZKTqTbeR+DzNoBNRc8exsgo9Y1NWsJn3tyL6vI0= benmaynard@Benjamins-MacBook-Pro.local" -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
           # Fetch backup file from GCS
           echo "Fetching database backup..."
           DATE_STRING=$(date +_%Y_%m_%d)
-          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/world$DATE_STRING.sql.age /tmp/world.sql.age
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/world$DATE_STRING.sql.age /tmp/world.sql.age
           # Decrypt backup
           echo "Decrypt backup"
           age --decrypt -i tests/keys/priv /tmp/world.sql.age > /tmp/world.sql
@@ -414,6 +436,7 @@ jobs:
           sed -i '/-- Dump completed on/d' /tmp/world.sql
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           diff tests/db/world.sql /tmp/world.sql
@@ -424,21 +447,21 @@ jobs:
       - name: GPC post test cleanup
         if: always()
         run: |
-          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master | grep "\.sql" | wc -l`
+          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           while (( $NUM_ITEMS > 0 ))
           do
-            CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master | grep "\.sql" | head -1`
+            CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | head -1`
             gsutil rm $CURRENT_BACKUP_TO_DELETE
-            NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}_master | grep "\.sql" | wc -l`
+            NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           done
       - name: AWS post test cleanup
         if: always()
         run: |
-          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master | grep "\.sql" | wc -l`
+          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           while (( $NUM_ITEMS > 0 ))
           do
-            CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master | grep "\.sql" | head -1`
-            aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master/$CURRENT_BACKUP_TO_DELETE
-            NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master | grep "\.sql" | wc -l`
+            CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | head -1`
+            aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/$CURRENT_BACKUP_TO_DELETE
+            NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           done
-          aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}_master
+          aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master
