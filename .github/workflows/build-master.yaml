@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: ["mysql:5.7.32","mysql:8.0.24","mariadb:10.1","mariadb:10.2","mariadb:10.3","mariadb:10.4","mariadb:10.5"]
+        test: ["mysql:5.7.32","mysql:8.0.24","mariadb:10.2","mariadb:10.3","mariadb:10.4","mariadb:10.5"]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -524,24 +524,3 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.age
-      - name: GPC post test cleanup
-        if: always()
-        run: |
-          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
-          while (( $NUM_ITEMS > 0 ))
-          do
-            CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | head -1`
-            gsutil rm $CURRENT_BACKUP_TO_DELETE
-            NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
-          done
-      - name: AWS post test cleanup
-        if: always()
-        run: |
-          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
-          while (( $NUM_ITEMS > 0 ))
-          do
-            CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | head -1`
-            aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master/$CURRENT_BACKUP_TO_DELETE
-            NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master | grep "\.sql" | wc -l`
-          done
-          aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.sha }}${{matrix.test}}_master

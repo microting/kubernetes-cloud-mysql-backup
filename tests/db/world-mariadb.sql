@@ -33,7 +33,7 @@ CREATE TABLE `city` (
   `Name` char(35) NOT NULL DEFAULT '',
   `CountryCode` char(3) NOT NULL DEFAULT '',
   `District` char(20) NOT NULL DEFAULT '',
-  `Population` int(11) NOT NULL DEFAULT '0',
+  `Population` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`ID`),
   KEY `CountryCode` (`CountryCode`),
   CONSTRAINT `city_ibfk_1` FOREIGN KEY (`CountryCode`) REFERENCES `country` (`Code`)
@@ -62,9 +62,9 @@ CREATE TABLE `country` (
   `Name` char(52) NOT NULL DEFAULT '',
   `Continent` enum('Asia','Europe','North America','Africa','Oceania','Antarctica','South America') NOT NULL DEFAULT 'Asia',
   `Region` char(26) NOT NULL DEFAULT '',
-  `SurfaceArea` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `SurfaceArea` decimal(10,2) NOT NULL DEFAULT 0.00,
   `IndepYear` smallint(6) DEFAULT NULL,
-  `Population` int(11) NOT NULL DEFAULT '0',
+  `Population` int(11) NOT NULL DEFAULT 0,
   `LifeExpectancy` decimal(3,1) DEFAULT NULL,
   `GNP` decimal(10,2) DEFAULT NULL,
   `GNPOld` decimal(10,2) DEFAULT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE `countrylanguage` (
   `CountryCode` char(3) NOT NULL DEFAULT '',
   `Language` char(30) NOT NULL DEFAULT '',
   `IsOfficial` enum('T','F') NOT NULL DEFAULT 'F',
-  `Percentage` decimal(4,1) NOT NULL DEFAULT '0.0',
+  `Percentage` decimal(4,1) NOT NULL DEFAULT 0.0,
   PRIMARY KEY (`CountryCode`,`Language`),
   KEY `CountryCode` (`CountryCode`),
   CONSTRAINT `countryLanguage_ibfk_1` FOREIGN KEY (`CountryCode`) REFERENCES `country` (`Code`)
@@ -123,3 +123,4 @@ UNLOCK TABLES;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+

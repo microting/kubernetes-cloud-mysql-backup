@@ -1,5 +1,5 @@
 # Set the base image
-FROM alpine:3.12.1
+FROM alpine:3.13.5
 
 # Install required packages
 RUN apk -v --update add \
@@ -14,7 +14,7 @@ RUN apk -v --update add \
     bash \
     libc6-compat \
     gnupg \
-    coreutils \        
+    coreutils \
     gzip \
     go \
     git && \
