@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: ["mysql:5.7","mysql:8.0","mariadb:10.1","mariadb:10.2","mariadb:10.3","mariadb:10.4","mariadb:10.5"]
+        test: ["mysql:5.7.32","mysql:8.0.24","mariadb:10.1","mariadb:10.2","mariadb:10.3","mariadb:10.4","mariadb:10.5"]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -76,7 +76,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -99,7 +104,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -122,7 +132,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
@@ -144,7 +159,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -168,7 +188,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -194,7 +219,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
@@ -222,7 +252,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
@@ -247,7 +282,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
@@ -268,7 +308,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -291,7 +336,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -314,7 +364,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
@@ -336,7 +391,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -360,7 +420,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -386,7 +451,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
@@ -414,7 +484,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
@@ -439,7 +514,12 @@ jobs:
           sed -i '/-- Server version/d' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
-          diff tests/db/world.sql /tmp/world.sql
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            diff tests/db/world.sql /tmp/world.sql
+          fi
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
