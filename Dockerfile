@@ -1,50 +1,41 @@
 # Set the base image
-FROM alpine:3.13.5
+FROM ubuntu:21.04
 
 # Install required packages
-RUN apk -v --update add \
-    python3 \
-    py-pip \
+RUN apt-get update
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install --no-install-recommends  tzdata
+RUN apt-get install --no-install-recommends -y python3-pip
+RUN apt-get -y install --no-install-recommends \
     groff \
     less \
     mailcap \
-    mysql-client \
+    mysql-client-8.0 \
     curl \
-    py-crcmod \
     bash \
-    libc6-compat \
     gnupg \
     coreutils \
     gzip \
-    go \
-    git && \
-    pip3 install --upgrade six awscli s3cmd python-magic && \
-    rm /var/cache/apk/*
+    age
+RUN apt-get -y install --no-install-recommends git
+RUN apt-get install -y --no-install-recommends apt-transport-https ca-certificates gnupg
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends google-cloud-sdk
+RUN apt-get clean
+RUN apt-get autoremove
+RUN pip3 install --upgrade six awscli s3cmd python-magic
+    # && \
+    #rm /var/cache/apk/*
 
 # Set Default Environment Variables
 ENV BACKUP_CREATE_DATABASE_STATEMENT=false
 ENV TARGET_DATABASE_PORT=3306
 ENV SLACK_ENABLED=false
 ENV SLACK_USERNAME=kubernetes-s3-mysql-backup
-ENV CLOUD_SDK_VERSION=319.0.0
-# Release commit for https://github.com/FiloSottile/age/releases/tag/v1.0.0-beta5 / https://github.com/FiloSottile/age/commit/31500bfa2f6a36d2958483fc54d6e3cc74154cbc
-ENV AGE_VERSION=31500bfa2f6a36d2958483fc54d6e3cc74154cbc
 ENV BACKUP_PROVIDER=aws
 
-# Install FiloSottile/age (https://github.com/FiloSottile/age)
-RUN git clone https://filippo.io/age && \
-    cd age && \
-    git checkout $AGE_VERSION && \
-    go build -o . filippo.io/age/cmd/... && cp age /usr/local/bin/
-
-# Set Google Cloud SDK Path
-ENV PATH /google-cloud-sdk/bin:$PATH
-
-# Install Google Cloud SDK
-RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-    gcloud config set core/disable_usage_reporting true && \
+RUN gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
     gcloud config set metrics/environment github_docker_image && \
     gcloud --version

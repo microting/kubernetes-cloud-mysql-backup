@@ -14,6 +14,7 @@ if [ ! -z "$GCP_GCLOUD_AUTH" ]; then
     fi
 
     # Activate the Service Account
+    echo "Activating Google cloud services"
     gcloud auth activate-service-account --key-file=$HOME/gcloud.json
 
 fi
@@ -46,11 +47,22 @@ fi
 
 # Loop through all the defined databases, seperating by a ,
 if [ "$has_failed" = false ]; then
-    for CURRENT_DATABASE in ${TARGET_DATABASE_NAMES//,/ }; do
+    while [ "$TARGET_DATABASE_NAMES" ] ;do
+    # extract the substring from start of string up to delimiter.
+    # this is the first "element" of the string.
+    CURRENT_DATABASE=${TARGET_DATABASE_NAMES%%,*}
+    echo "> [$CURRENT_DATABASE]"
+    # if there's only one element left, set `IN` to an empty string.
+    # this causes us to exit this `while` loop.
+    # else, we delete the first "element" of the string from IN, and move onto the next.
+    [ "$TARGET_DATABASE_NAMES" = "$CURRENT_DATABASE" ] && \
+        TARGET_DATABASE_NAMES='' || \
+        TARGET_DATABASE_NAMES="${TARGET_DATABASE_NAMES#*;}"
+    #for CURRENT_DATABASE in (${TARGET_DATABASE_NAMES//,/ }); do
 
         DUMP=$CURRENT_DATABASE$(date +$BACKUP_TIMESTAMP).sql
         # Perform the database backup. Put the output to a variable. If successful upload the backup to S3, if unsuccessful print an entry to the console and the log, and set has_failed to true.
-        if sqloutput=$(mysqldump -u $TARGET_DATABASE_USER -h $TARGET_DATABASE_HOST -p$TARGET_DATABASE_PASSWORD -P $TARGET_DATABASE_PORT $BACKUP_ADDITIONAL_PARAMS $BACKUP_CREATE_DATABASE_STATEMENT $CURRENT_DATABASE 2>&1 >/tmp/$DUMP); then
+        if sqloutput=$(mysqldump --column-statistics=0 -u $TARGET_DATABASE_USER -h $TARGET_DATABASE_HOST -p$TARGET_DATABASE_PASSWORD -P $TARGET_DATABASE_PORT $BACKUP_ADDITIONAL_PARAMS $BACKUP_CREATE_DATABASE_STATEMENT $CURRENT_DATABASE 2>&1 >/tmp/$DUMP); then
 
             echo -e "Database backup successfully completed for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S')."
 
