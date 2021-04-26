@@ -58,9 +58,12 @@ if [ "$has_failed" = false ]; then
     [ "$TARGET_DATABASE_NAMES" = "$CURRENT_DATABASE" ] && \
         TARGET_DATABASE_NAMES='' || \
         TARGET_DATABASE_NAMES="${TARGET_DATABASE_NAMES#*;}"
-    #for CURRENT_DATABASE in (${TARGET_DATABASE_NAMES//,/ }); do
 
-        DUMP=$CURRENT_DATABASE$(date +$BACKUP_TIMESTAMP).sql
+        if  [ "$NO_DB_NAME" = "true" ]; then
+            DUMP=backup$(date +$BACKUP_TIMESTAMP).sql
+        else
+            DUMP=$CURRENT_DATABASE$(date +$BACKUP_TIMESTAMP).sql
+        fi
         # Perform the database backup. Put the output to a variable. If successful upload the backup to S3, if unsuccessful print an entry to the console and the log, and set has_failed to true.
         if sqloutput=$(mysqldump --column-statistics=0 -u $TARGET_DATABASE_USER -h $TARGET_DATABASE_HOST -p$TARGET_DATABASE_PASSWORD -P $TARGET_DATABASE_PORT $BACKUP_ADDITIONAL_PARAMS $BACKUP_CREATE_DATABASE_STATEMENT $CURRENT_DATABASE 2>&1 >/tmp/$DUMP); then
 
@@ -106,6 +109,20 @@ if [ "$has_failed" = false ]; then
                     has_failed=true
                 fi
                 rm /tmp/"$DUMP"
+
+                if [ "$DB_CLEANUP" = "true" ]; then
+                    NUM_BACKUPS=`aws s3 ls "${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/" | wc -l`;
+                    echo "Checking backup status for ${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/";
+                    echo "Current number of backups : $NUM_BACKUPS max is $MAX_NUMBER_OF_BACKUPS";
+                    while (( $NUM_BACKUPS > $MAX_NUMBER_OF_BACKUPS ));
+                    do
+                        CURRENT_BACKUP_TO_DELETE=`aws s3 ls $DATABASE_NAME/ | grep backup | awk '{print $4}' | sed -n 1p`;
+                        echo "SHOULD DELETE $CURRENT_BACKUP_TO_DELETE.";
+                        aws s3 rm s3://${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/$CURRENT_BACKUP_TO_DELETE;
+                        NUM_BACKUPS=`aws s3 ls "${DATABASE_NAME}/" | wc -l`;
+                        echo "New number of backups : $NUM_BACKUPS max is $MAX_NUMBER_OF_BACKUPS";
+                    done;
+                fi
             fi
 
             # If the Backup Provider is GCP, then upload to GCS
