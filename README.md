@@ -8,6 +8,19 @@ Over time, kubernetes-cloud-mysql-backup will be updated to support more feature
 
 All changes are captured in the [changelog](CHANGELOG.md), which adheres to [Semantic Versioning](https://semver.org/spec/vadheres2.0.0.html).
 
+Docker image https://hub.docker.com/repository/docker/microtingas/kubernetes-cloud-mysql-backup
+
+## Supported and tested database servers:
+
+| Database servers |
+|------------------|
+| MySQL 5.7.32     |
+| MySQL 8.0.24     |
+| MariaDB 10.2     |
+| MariaDB 10.3     |
+| MariaDB 10.4     |
+| MariaDB 10.5     |
+
 
 ## Environment Variables
 
