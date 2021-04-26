@@ -111,15 +111,15 @@ if [ "$has_failed" = false ]; then
                 rm /tmp/"$DUMP"
 
                 if [ "$DB_CLEANUP" = "true" ]; then
-                    NUM_BACKUPS=`aws s3 ls "${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/" | wc -l`;
+                    NUM_BACKUPS=`aws s3 ls "${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/" | grep "\.sql" | wc -l`;
                     echo "Checking backup status for ${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/";
                     echo "Current number of backups : $NUM_BACKUPS max is $MAX_NUMBER_OF_BACKUPS";
-                    while (( $NUM_BACKUPS > $MAX_NUMBER_OF_BACKUPS ));
+                    while [ $NUM_BACKUPS -gt $MAX_NUMBER_OF_BACKUPS ];
                     do
-                        CURRENT_BACKUP_TO_DELETE=`aws s3 ls $DATABASE_NAME/ | grep backup | awk '{print $4}' | sed -n 1p`;
+                        CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/ | grep "\.sql" | awk '{print $4}' | sed -n 1p`;
                         echo "SHOULD DELETE $CURRENT_BACKUP_TO_DELETE.";
                         aws s3 rm s3://${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/$CURRENT_BACKUP_TO_DELETE;
-                        NUM_BACKUPS=`aws s3 ls "${DATABASE_NAME}/" | wc -l`;
+                        NUM_BACKUPS=`aws s3 ls "${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/" | grep "\.sql" | wc -l`;
                         echo "New number of backups : $NUM_BACKUPS max is $MAX_NUMBER_OF_BACKUPS";
                     done;
                 fi
@@ -136,6 +136,20 @@ if [ "$has_failed" = false ]; then
                     has_failed=true
                 fi
                 rm /tmp/"$DUMP"
+
+                if [ "$DB_CLEANUP" = "true" ]; then
+                    NUM_BACKUPS=`gsutil ls gs://"${GCP_BUCKET_NAME}${GCP_BUCKET_BACKUP_PATH}/" | grep "\.sql" | wc -l`;
+                    echo "Checking backup status for ${GCP_BUCKET_NAME}${GCP_BUCKET_BACKUP_PATH}/";
+                    echo "Current number of backups : $NUM_BACKUPS max is $MAX_NUMBER_OF_BACKUPS";
+                    while [ $NUM_BACKUPS -gt $MAX_NUMBER_OF_BACKUPS ];
+                    do
+                        CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${GCP_BUCKET_NAME}${GCP_BUCKET_BACKUP_PATH}/ | grep "\.sql" | sed -n 1p`;
+                        echo "SHOULD DELETE $CURRENT_BACKUP_TO_DELETE";
+                        gsutil rm $CURRENT_BACKUP_TO_DELETE;
+                        NUM_BACKUPS=`gsutil ls gs://"${GCP_BUCKET_NAME}${GCP_BUCKET_BACKUP_PATH}/"| grep "\.sql" | wc -l`;
+                        echo "New number of backups : $NUM_BACKUPS max is $MAX_NUMBER_OF_BACKUPS";
+                    done;
+                fi
             fi
 
         else

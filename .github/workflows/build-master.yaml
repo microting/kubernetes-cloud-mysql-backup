@@ -121,6 +121,40 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
+      - name: Test GCP Standard Backup and db cleanup limited to 1 entry
+        run: |
+          # Perform database backup
+          echo "Performing database backup..."
+          docker run -e GCP_GCLOUD_AUTH="${{ secrets.GCP_SA }}" -e GCP_BUCKET_BACKUP_PATH="/${{ github.run_id }}${{matrix.test}}_master" -e GCP_BUCKET_NAME="${{ secrets.GBUCKET_NAME }}" -e DB_CLEANUP="true" -e MAX_NUMBER_OF_BACKUPS=1 -e BACKUP_TIMESTAMP="_%Y_%m_%d" --env-file tests/configs/gcp.env --network backup-net kubernetes-cloud-mysql-backup:test
+          # Fetch backup file from GCS
+          DATE_STRING=$(date +_%Y_%m_%d)
+          echo "Fetching database backup..."
+          gsutil cp gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }}${{matrix.test}}_master/world$DATE_STRING.sql /tmp/world.sql
+          # Strip the "Dump Completed on" line
+          echo "Stripping Dump Completed On line from downloaded backup..."
+          sed -i '/-- Dump completed on/d' /tmp/world.sql
+          sed -i '/-- MariaDB dump/d' /tmp/world.sql
+          sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
+          # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
+          echo "Comparing database backup to known good database..."
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            if grep -q "8.0" <<< "${{matrix.test}}"; then
+              diff tests/db/world-mysql.sql /tmp/world.sql
+            else
+              diff tests/db/world.sql /tmp/world.sql
+            fi
+          fi
+          # Remove /tmp/world.sql
+          echo "Removing /tmp/world.sql"
+          rm /tmp/world.sql
+          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | wc -l`
+          if [[ "$NUM_ITEMS" -gt 1 ]]; then
+            exit 1;
+          fi
       - name: Test GCP Compressed Backup
         run: |
           # Perform database backup
@@ -385,6 +419,69 @@ jobs:
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
+      - name: Test GCP Standard Backup with generic name
+        run: |
+          # Perform database backup
+          echo "Performing database backup..."
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.run_id }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" -e NO_DB_NAME="true" --env-file tests/configs/aws.env --network backup-net kubernetes-cloud-mysql-backup:test
+          # Fetch backup file from GCS
+          echo "Fetching database backup..."
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master/backup.sql /tmp/world.sql
+          # Strip the "Dump Completed on" line
+          echo "Stripping Dump Completed On line from downloaded backup..."
+          sed -i '/-- Dump completed on/d' /tmp/world.sql
+          sed -i '/-- MariaDB dump/d' /tmp/world.sql
+          sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
+          # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
+          echo "Comparing database backup to known good database..."
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            if grep -q "8.0" <<< "${{matrix.test}}"; then
+              diff tests/db/world-mysql.sql /tmp/world.sql
+            else
+              diff tests/db/world.sql /tmp/world.sql
+            fi
+          fi
+          # Remove /tmp/world.sql
+          echo "Removing /tmp/world.sql"
+          rm /tmp/world.sql
+      - name: Test AWS Standard Backup and db cleanup limited to 1 entry
+        run: |
+          # Perform database backup
+          echo "Performing database backup..."
+          docker run -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_KEY }} -e AWS_BUCKET_BACKUP_PATH="/${{ github.run_id }}${{matrix.test}}_master"  -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKETNAME }}" -e DB_CLEANUP="true" -e MAX_NUMBER_OF_BACKUPS=1 --env-file tests/configs/aws.env -e BACKUP_TIMESTAMP="_%Y_%m_%d" --network backup-net kubernetes-cloud-mysql-backup:test
+          # Fetch backup file from AWS
+          DATE_STRING=$(date +_%Y_%m_%d)
+          echo "Fetching database backup..."
+          aws s3 cp s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master/world$DATE_STRING.sql /tmp/world.sql
+          # Strip the "Dump Completed on" line
+          echo "Stripping Dump Completed On line from downloaded backup..."
+          sed -i '/-- Dump completed on/d' /tmp/world.sql
+          sed -i '/-- MariaDB dump/d' /tmp/world.sql
+          sed -i '/-- MySQL dump/d' /tmp/world.sql
+          sed -i '/-- Server version/d' /tmp/world.sql
+          # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
+          echo "Comparing database backup to known good database..."
+          if grep -q "mariadb" <<< "${{matrix.test}}"; then
+            echo "comparing MariaDB test file"
+            diff tests/db/world-mariadb.sql /tmp/world.sql
+          else
+            if grep -q "8.0" <<< "${{matrix.test}}"; then
+              diff tests/db/world-mysql.sql /tmp/world.sql
+            else
+              diff tests/db/world.sql /tmp/world.sql
+            fi
+          fi
+          # Remove /tmp/world.sql
+          echo "Removing /tmp/world.sql"
+          rm /tmp/world.sql
+          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | wc -l`
+          if [[ "$NUM_ITEMS" -gt 1 ]]; then
+            exit 1;
+          fi
       - name: Test AWS Compressed Backup
         run: |
           # Perform database backup
