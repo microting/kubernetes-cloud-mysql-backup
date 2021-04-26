@@ -591,21 +591,21 @@ jobs:
       - name: GPC post test cleanup
         if: always()
         run: |
-          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           while (( $NUM_ITEMS > 0 ))
           do
-            CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }} | grep "\.sql" | head -1`
+            CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | head -1`
             gsutil rm $CURRENT_BACKUP_TO_DELETE
-            NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+            NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           done
       - name: AWS post test cleanup
         if: always()
         run: |
-          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           while (( $NUM_ITEMS > 0 ))
           do
-            CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }} | grep "\.sql" | head -1`
-            aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}/$CURRENT_BACKUP_TO_DELETE
-            NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+            CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | head -1`
+            aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master/$CURRENT_BACKUP_TO_DELETE
+            NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master | grep "\.sql" | wc -l`
           done
-          aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}
+          aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}${{matrix.test}}_master
