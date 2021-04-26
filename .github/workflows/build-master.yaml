@@ -34,7 +34,7 @@ jobs:
           git checkout 31500bfa2f6a36d2958483fc54d6e3cc74154cbc
           go build -o . filippo.io/age/cmd/...
           sudo cp age /usr/local/bin/
-      - name: Build kubernetes-cloud-mysql-backup, pull mysql and setup Docker
+      - name: Build kubernetes-cloud-mysql-backup, pull ${{matrix.test}} and setup Docker
         run: |
           # Build Container Locally for testing
           echo "Building kubernetes-cloud-mysql-backup..."
@@ -81,7 +81,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -113,7 +113,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -145,7 +145,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -176,7 +176,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -209,7 +209,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -244,7 +244,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -281,7 +281,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -315,7 +315,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -345,7 +345,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -377,7 +377,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -409,7 +409,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -440,7 +440,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -473,7 +473,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -508,7 +508,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -545,7 +545,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -579,7 +579,7 @@ jobs:
             diff tests/db/world-mariadb.sql /tmp/world.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world.sql /tmp/world-mysql.sql
+              diff tests/db/world-mysql.sql /tmp/world.sql
             else
               diff tests/db/world.sql /tmp/world.sql
             fi
@@ -588,3 +588,24 @@ jobs:
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
           rm /tmp/world.sql.age
+      - name: GPC post test cleanup
+        if: always()
+        run: |
+          NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+          while (( $NUM_ITEMS > 0 ))
+          do
+            CURRENT_BACKUP_TO_DELETE=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }} | grep "\.sql" | head -1`
+            gsutil rm $CURRENT_BACKUP_TO_DELETE
+            NUM_ITEMS=`gsutil ls gs://${{ secrets.GBUCKET_NAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+          done
+      - name: AWS post test cleanup
+        if: always()
+        run: |
+          NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+          while (( $NUM_ITEMS > 0 ))
+          do
+            CURRENT_BACKUP_TO_DELETE=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }} | grep "\.sql" | head -1`
+            aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}/$CURRENT_BACKUP_TO_DELETE
+            NUM_ITEMS=`aws s3 ls ${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }} | grep "\.sql" | wc -l`
+          done
+          aws s3 rm s3://${{ secrets.AWS_BUCKETNAME }}/${{ github.run_id }}
