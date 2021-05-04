@@ -46,12 +46,14 @@ if [ "$TARGET_ALL_DATABASES" = "true" ]; then
 fi
 
 echo "Loop through all the defined databases, seperating by a ,"
+echo -e "TARGET_DATABASE_NAMES is ($TARGET_DATABASE_NAMES)"
 if [ "$has_failed" = false ]; then
     while [ "$TARGET_DATABASE_NAMES" ] ;do
         # extract the substring from start of string up to delimiter.
         # this is the first "element" of the string.
         CURRENT_DATABASE=${TARGET_DATABASE_NAMES%%,*}
         echo "> [$CURRENT_DATABASE]"
+        echo "Current database is $CURRENT_DATABASE"
         # if there's only one element left, set `IN` to an empty string.
         # this causes us to exit this `while` loop.
         # else, we delete the first "element" of the string from IN, and move onto the next.
