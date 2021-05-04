@@ -3,7 +3,7 @@
 # Set the has_failed variable to false. This will change if any of the subsequent database backups/uploads fail.
 has_failed=false
 
-# Create the GCloud Authentication file if set
+echo "Create the GCloud Authentication file if set"
 if [ ! -z "$GCP_GCLOUD_AUTH" ]; then
 
     # Check if we are already base64 decoded, credit: https://stackoverflow.com/questions/8571501/how-to-check-whether-a-string-is-base64-encoded-or-not
@@ -19,7 +19,7 @@ if [ ! -z "$GCP_GCLOUD_AUTH" ]; then
 
 fi
 
-# Set the BACKUP_CREATE_DATABASE_STATEMENT variable
+echo "Set the BACKUP_CREATE_DATABASE_STATEMENT variable"
 if [ "$BACKUP_CREATE_DATABASE_STATEMENT" = "true" ]; then
     BACKUP_CREATE_DATABASE_STATEMENT="--databases"
 else
@@ -45,17 +45,17 @@ if [ "$TARGET_ALL_DATABASES" = "true" ]; then
     fi
 fi
 
-# Loop through all the defined databases, seperating by a ,
+echo "Loop through all the defined databases, seperating by a ,"
 if [ "$has_failed" = false ]; then
     while [ "$TARGET_DATABASE_NAMES" ] ;do
-    # extract the substring from start of string up to delimiter.
-    # this is the first "element" of the string.
-    CURRENT_DATABASE=${TARGET_DATABASE_NAMES%%,*}
-    echo "> [$CURRENT_DATABASE]"
-    # if there's only one element left, set `IN` to an empty string.
-    # this causes us to exit this `while` loop.
-    # else, we delete the first "element" of the string from IN, and move onto the next.
-    [ "$TARGET_DATABASE_NAMES" = "$CURRENT_DATABASE" ] && \
+        # extract the substring from start of string up to delimiter.
+        # this is the first "element" of the string.
+        CURRENT_DATABASE=${TARGET_DATABASE_NAMES%%,*}
+        echo "> [$CURRENT_DATABASE]"
+        # if there's only one element left, set `IN` to an empty string.
+        # this causes us to exit this `while` loop.
+        # else, we delete the first "element" of the string from IN, and move onto the next.
+        [ "$TARGET_DATABASE_NAMES" = "$CURRENT_DATABASE" ] && \
         TARGET_DATABASE_NAMES='' || \
         TARGET_DATABASE_NAMES="${TARGET_DATABASE_NAMES#*;}"
 
@@ -64,7 +64,7 @@ if [ "$has_failed" = false ]; then
         else
             DUMP=$CURRENT_DATABASE$(date +$BACKUP_TIMESTAMP).sql
         fi
-        # Perform the database backup. Put the output to a variable. If successful upload the backup to S3, if unsuccessful print an entry to the console and the log, and set has_failed to true.
+        echo "Perform the database backup. Put the output to a variable. If successful upload the backup to S3, if unsuccessful print an entry to the console and the log, and set has_failed to true."
         if sqloutput=$(mysqldump --column-statistics=0 -u $TARGET_DATABASE_USER -h $TARGET_DATABASE_HOST -p$TARGET_DATABASE_PASSWORD -P $TARGET_DATABASE_PORT $BACKUP_ADDITIONAL_PARAMS $BACKUP_CREATE_DATABASE_STATEMENT $CURRENT_DATABASE 2>&1 >/tmp/$DUMP); then
 
             echo -e "Database backup successfully completed for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S')."
@@ -93,7 +93,7 @@ if [ "$has_failed" = false ]; then
             # Convert BACKUP_PROVIDER to lowercase before executing if statement
             BACKUP_PROVIDER=$(echo "$BACKUP_PROVIDER" | awk '{print tolower($0)}')
 
-            # If the Backup Provider is AWS, then upload to S3
+            echo "If the Backup Provider is AWS, then upload to S3"
             if [ "$BACKUP_PROVIDER" = "aws" ]; then
 
                 # If the AWS_S3_ENDPOINT variable isn't empty, then populate the --endpoint-url parameter to use a custom S3 compatable endpoint
@@ -151,12 +151,10 @@ if [ "$has_failed" = false ]; then
                     done;
                 fi
             fi
-
         else
             echo -e "Database backup FAILED for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S'). Error: $sqloutput" | tee -a /tmp/kubernetes-cloud-mysql-backup.log
             has_failed=true
         fi
-
     done
 fi
 
