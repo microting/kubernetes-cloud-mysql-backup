@@ -156,6 +156,9 @@ if [ "$has_failed" = false ]; then
         else
             echo -e "Database backup FAILED for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S'). Error: $sqloutput" | tee -a /tmp/kubernetes-cloud-mysql-backup.log
             has_failed=true
+            if [ "$IGNORE_ERRORS" = "true" ]; then
+              has_failed=false
+            fi
         fi
     done
 fi
