@@ -12,12 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: ["mysql:5.7.32","mysql:8.0.24","mariadb:10.2","mariadb:10.3","mariadb:10.4","mariadb:10.5"]
+        test: ["mysql:5.7.32","mysql:5.7.38","mysql:8.0.24","mysql:8.0.29","mariadb:10.2","mariadb:10.3","mariadb:10.4","mariadb:10.5","mariadb:10.6","mariadb:10.7","mariadb:10."]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@main
         with:
           project_id: kubernetes-cloud-mysql-backup
           service_account_key: ${{ secrets.GCP_SA }}

@@ -1,5 +1,5 @@
 # Set the base image
-FROM ubuntu:21.04
+FROM ubuntu:22.04
 
 # Install required packages
 RUN apt-get update
