@@ -1,5 +1,5 @@
 # Set the base image
-FROM ubuntu:21.04
+FROM ubuntu:22.04
 
 # Install required packages
 RUN apt-get update
@@ -14,8 +14,8 @@ RUN apt-get -y install --no-install-recommends \
     bash \
     gnupg \
     coreutils \
-    gzip \
-    age
+    golang-go \
+    gzip
 RUN apt-get -y install --no-install-recommends git
 RUN apt-get install -y --no-install-recommends apt-transport-https ca-certificates gnupg
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
@@ -33,7 +33,14 @@ ENV BACKUP_CREATE_DATABASE_STATEMENT=false
 ENV TARGET_DATABASE_PORT=3306
 ENV SLACK_ENABLED=false
 ENV SLACK_USERNAME=kubernetes-s3-mysql-backup
+ENV AGE_VERSION=552aa0a07de0b42c16126d3107bd8895184a69e7
 ENV BACKUP_PROVIDER=aws
+
+# Install FiloSottile/age (https://github.com/FiloSottile/age)
+RUN git clone https://filippo.io/age && \
+    cd age && \
+    git checkout $AGE_VERSION && \
+    go build -o . filippo.io/age/cmd/... && cp age /usr/local/bin/
 
 RUN gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
