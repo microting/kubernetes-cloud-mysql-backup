@@ -15,7 +15,8 @@ RUN apt-get -y install --no-install-recommends \
     gnupg \
     coreutils \
     gzip \
-    age
+    age \
+    msmtp
 RUN apt-get -y install --no-install-recommends git
 RUN apt-get install -y --no-install-recommends apt-transport-https ca-certificates gnupg
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
@@ -34,6 +35,13 @@ ENV TARGET_DATABASE_PORT=3306
 ENV SLACK_ENABLED=false
 ENV SLACK_USERNAME=kubernetes-s3-mysql-backup
 ENV BACKUP_PROVIDER=aws
+ENV EMAIL_ENABLED=false
+ENV EMAIL_TO=""
+ENV EMAIL_FROM=""
+ENV EMAIL_SMTP_HOST=""
+ENV EMAIL_SMTP_PORT=587
+ENV EMAIL_SMTP_USER=""
+ENV EMAIL_SMTP_PASSWORD=""
 
 RUN gcloud config set core/disable_usage_reporting true && \
     gcloud config set component_manager/disable_update_check true && \
@@ -43,6 +51,10 @@ RUN gcloud config set core/disable_usage_reporting true && \
 # Copy Slack Alert script and make executable
 COPY resources/slack-alert.sh /
 RUN chmod +x /slack-alert.sh
+
+# Copy email alert script and make executable
+COPY resources/email-alert.sh /
+RUN chmod +x /email-alert.sh
 
 # Copy backup script and execute
 COPY resources/perform-backup.sh /

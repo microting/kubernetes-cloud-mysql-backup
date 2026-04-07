@@ -106,6 +106,14 @@ if [ "$has_failed" = false ]; then
                 # Perform the upload to S3. Put the output to a variable. If successful, print an entry to the console and the log. If unsuccessful, set has_failed to true and print an entry to the console and the log
                 if awsoutput=$(aws $ENDPOINT s3 cp /tmp/$DUMP s3://$AWS_BUCKET_NAME$AWS_BUCKET_BACKUP_PATH/$DUMP 2>&1); then
                     echo -e "Database backup successfully uploaded for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S')."
+
+                    # Check if the new backup is significantly smaller than the previous one
+                    NEW_SIZE=$(stat -c%s /tmp/$DUMP 2>/dev/null || echo "0")
+                    PREV_BACKUP=$(aws $ENDPOINT s3 ls "s3://${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/" 2>/dev/null | grep "\.sql" | sort | tail -2 | head -1 | awk '{print $3}')
+                    if [ -n "$PREV_BACKUP" ] && [ "$PREV_BACKUP" -gt 0 ] 2>/dev/null && [ "$NEW_SIZE" -lt $(( PREV_BACKUP * 90 / 100 )) ]; then
+                        echo -e "WARNING: New backup for $CURRENT_DATABASE ($NEW_SIZE bytes) is more than 10% smaller than previous backup ($PREV_BACKUP bytes) at $(date +'%d-%m-%Y %H:%M:%S')." | tee -a /tmp/kubernetes-cloud-mysql-backup.log
+                        has_failed=true
+                    fi
                 else
                     echo -e "Database backup failed to upload for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S'). Error: $awsoutput" | tee -a /tmp/kubernetes-cloud-mysql-backup.log
                     has_failed=true
@@ -178,6 +186,15 @@ if [ "$has_failed" = true ]; then
         /slack-alert.sh "One or more backups on database host $TARGET_DATABASE_HOST failed. The error details are included below:" "$logcontents"
     fi
 
+    # If email alerts are enabled, send an email with the failure log
+    if [ "$EMAIL_ENABLED" = "true" ]; then
+        logcontents=$(cat /tmp/kubernetes-cloud-mysql-backup.log)
+        /email-alert.sh "BACKUP FAILED: $TARGET_DATABASE_HOST" "One or more backups on database host $TARGET_DATABASE_HOST failed at $(date +'%d-%m-%Y %H:%M:%S').
+
+Error details:
+$logcontents"
+    fi
+
     echo -e "kubernetes-cloud-mysql-backup encountered 1 or more errors. Exiting with status code 1."
     exit 1
 
@@ -186,6 +203,11 @@ else
     # If Slack alerts are enabled, send a notification that all database backups were successful
     if [ "$SLACK_ENABLED" = "true" ]; then
         /slack-alert.sh "All database backups successfully completed on database host $TARGET_DATABASE_HOST."
+    fi
+
+    # If email alerts are enabled, send a success notification
+    if [ "$EMAIL_ENABLED" = "true" ]; then
+        /email-alert.sh "BACKUP OK: $TARGET_DATABASE_HOST" "All database backups successfully completed on database host $TARGET_DATABASE_HOST at $(date +'%d-%m-%Y %H:%M:%S')."
     fi
 
     exit 0
