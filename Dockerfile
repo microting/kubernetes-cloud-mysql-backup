@@ -15,8 +15,7 @@ RUN apt-get -y install --no-install-recommends \
     gnupg \
     coreutils \
     gzip \
-    age \
-    msmtp
+    age
 RUN apt-get -y install --no-install-recommends git
 RUN apt-get install -y --no-install-recommends apt-transport-https ca-certificates gnupg
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
