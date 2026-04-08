@@ -27,13 +27,9 @@ jobs:
           # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # if you have/need it
           aws-region: eu-central-1
       - name: Install Age Encryption
-        working-directory: /tmp
         run: |
-          git clone https://filippo.io/age
-          cd age
-          git checkout 31500bfa2f6a36d2958483fc54d6e3cc74154cbc
-          go build -o . filippo.io/age/cmd/...
-          sudo cp age /usr/local/bin/
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq age
       - name: Build kubernetes-cloud-mysql-backup, pull ${{matrix.test}} and setup Docker
         run: |
           # Build Container Locally for testing
