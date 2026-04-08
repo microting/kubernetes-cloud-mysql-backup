@@ -58,4 +58,8 @@ RUN chmod +x /email-alert.sh
 # Copy backup script and execute
 COPY resources/perform-backup.sh /
 RUN chmod +x /perform-backup.sh
+
+RUN useradd -m -s /bin/bash backupuser
+USER backupuser
+
 CMD ["sh", "/perform-backup.sh"]
