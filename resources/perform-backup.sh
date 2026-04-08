@@ -108,8 +108,10 @@ if [ "$has_failed" = false ]; then
                     echo -e "Database backup successfully uploaded for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S')."
 
                     # Check if the new backup is significantly smaller than the previous one
+                    # Get file extension to only compare against same type (e.g. .sql.gz vs .sql.gz)
                     NEW_SIZE=$(stat -c%s /tmp/$DUMP 2>/dev/null || echo "0")
-                    PREV_BACKUP=$(aws $ENDPOINT s3 ls "s3://${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/" 2>/dev/null | grep "\.sql" | sort | tail -2 | head -1 | awk '{print $3}')
+                    DUMP_EXT=$(echo "$DUMP" | sed 's/^[^.]*//') # e.g. .sql or .sql.gz or .sql.age
+                    PREV_BACKUP=$(aws $ENDPOINT s3 ls "s3://${AWS_BUCKET_NAME}${AWS_BUCKET_BACKUP_PATH}/" 2>/dev/null | grep "${DUMP_EXT}$" | sort | tail -2 | head -1 | awk '{print $3}')
                     if [ -n "$PREV_BACKUP" ] && [ "$PREV_BACKUP" -gt 0 ] 2>/dev/null && [ "$NEW_SIZE" -lt $(( PREV_BACKUP * 90 / 100 )) ]; then
                         echo -e "WARNING: New backup for $CURRENT_DATABASE ($NEW_SIZE bytes) is more than 10% smaller than previous backup ($PREV_BACKUP bytes) at $(date +'%d-%m-%Y %H:%M:%S')." | tee -a /tmp/kubernetes-cloud-mysql-backup.log
                         has_failed=true
