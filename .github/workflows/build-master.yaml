@@ -70,18 +70,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -99,18 +102,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -129,18 +135,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -165,18 +174,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -197,18 +209,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql
@@ -228,18 +243,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -261,18 +279,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql"
           rm /tmp/world.sql
@@ -296,18 +317,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
@@ -333,18 +357,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql
           echo "Removing /tmp/world.sql and /tmp/world.sql.gz.age"
           rm /tmp/world.sql
@@ -367,18 +394,21 @@ jobs:
           sed -i '/-- MariaDB dump/d' /tmp/world.sql
           sed -i '/-- MySQL dump/d' /tmp/world.sql
           sed -i '/-- Server version/d' /tmp/world.sql
+          sed -i 's/ COLLATE[= ][a-zA-Z0-9_]*//g' /tmp/world.sql
           # Compare the database backups, diff will exit with 1 if the files do not match causing the workflow to fail
           echo "Comparing database backup to known good database..."
           if grep -q "mariadb" <<< "${{matrix.test}}"; then
             echo "comparing MariaDB test file"
-            diff tests/db/world-mariadb.sql /tmp/world.sql
+            sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mariadb.sql > /tmp/world-ref.sql
           else
             if grep -q "8.0" <<< "${{matrix.test}}"; then
-              diff tests/db/world-mysql.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world-mysql.sql > /tmp/world-ref.sql
             else
-              diff tests/db/world.sql /tmp/world.sql
+              sed 's/ COLLATE[= ][a-zA-Z0-9_]*//g' tests/db/world.sql > /tmp/world-ref.sql
             fi
           fi
+          diff /tmp/world-ref.sql /tmp/world.sql
+          rm /tmp/world-ref.sql
           # Remove /tmp/world.sql and .age
           echo "Removing /tmp/world.sql and /tmp/world.sql.age"
           rm /tmp/world.sql

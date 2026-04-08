@@ -59,7 +59,7 @@ RUN chmod +x /email-alert.sh
 COPY resources/perform-backup.sh /
 RUN chmod +x /perform-backup.sh
 
-RUN useradd -m -s /bin/bash backupuser
-USER backupuser
+RUN useradd -u 1001 -m -s /bin/bash backupuser
+USER 1001
 
 CMD ["sh", "/perform-backup.sh"]
